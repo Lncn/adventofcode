@@ -25,6 +25,14 @@ func testHash6(hash [16]byte) bool {
 
 	return true
 }
+
+func testString(key string, test int, signal chan int) {
+	hash := md5.Sum([]byte(key + strconv.Itoa(test)))
+	if testHash6(hash) {
+		signal <- test
+	}
+}
+
 func main() {
 	// The example 'abcdef' should md5 hash with int '609043' to produce
 	// five leading zeros: md5sum('abcdef609043') = 000001dbbfa...
@@ -57,4 +65,19 @@ func main() {
 		}
 		test += 1
 	}
+
+	fmt.Println("Just for fun... Go routine Part 2:")
+
+	signal := make(chan int)
+	go func() {
+		test := 1
+		for /* ever */ {
+			go testString(key, test, signal)
+			test += 1
+		}
+	}()
+
+	/* This should block until a goroutine finds an winner! */
+	winner := <-signal
+	fmt.Printf("Found MD5 winner: %v\n", winner)
 }
